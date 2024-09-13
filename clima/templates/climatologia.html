@@ -8,7 +8,11 @@
 </head>
 <body>
     <h1>Gráfica de Datos Climatológicos</h1>
-    
+
+    <!-- Botones para controlar la lectura en tiempo real -->
+    <button id="start-reading">Iniciar Lectura</button>
+    <button id="stop-reading" disabled>Detener Lectura</button>
+
     <canvas id="graficoClimatologia" width="800" height="400"></canvas>
 
     <script>
@@ -79,6 +83,60 @@
                 }
             }
         });
+
+        let updateInterval = null;
+
+        // Función para iniciar la lectura y la actualización del gráfico
+        document.getElementById('start-reading').addEventListener('click', function() {
+            fetch('/iniciarlectura/')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Lectura iniciada:', data);
+                    // Iniciar la actualización del gráfico cada 5 segundos
+                    if (!updateInterval) {
+                        updateInterval = setInterval(actualizarGrafico, 5000);
+                    }
+                    // Deshabilitar el botón de inicio y habilitar el de detener
+                    document.getElementById('start-reading').disabled = true;
+                    document.getElementById('stop-reading').disabled = false;
+                });
+        });
+
+        // Función para detener la lectura y la actualización del gráfico
+        document.getElementById('stop-reading').addEventListener('click', function() {
+            fetch('/detenerlectura/')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Lectura detenida:', data);
+                    // Detener la actualización del gráfico
+                    if (updateInterval) {
+                        clearInterval(updateInterval);
+                        updateInterval = null;
+                    }
+                    // Habilitar el botón de inicio y deshabilitar el de detener
+                    document.getElementById('start-reading').disabled = false;
+                    document.getElementById('stop-reading').disabled = true;
+                });
+        });
+
+        // Función para actualizar el gráfico
+        function actualizarGrafico() {
+            fetch('/api/datos-climatologicos/')
+                .then(response => response.json())
+                .then(data => {
+                    chart.data.labels = data.fechas;
+                    chart.data.datasets[0].data = data.temperaturas;
+                    chart.data.datasets[1].data = data.humedades;
+                    chart.data.datasets[2].data = data.presiones;
+                    chart.data.datasets[3].data = data.velocidades_viento;
+                    chart.update();
+                });
+        }
+
+
+
+
+
     </script>
 </body>
 </html>
